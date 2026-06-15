@@ -2,47 +2,34 @@
 
 **Send to:** mosh.mta2@gmail.com
 **Subject:** `Final Exercise from: Moshe Tal, Shoham Fellner, Amit Reich, Omri Kadmon, Dor Kokotek`
+**Public repo:** https://github.com/dorkokotek651/DevOpsCourseFinalProject
 
-The 12 items the lecturer asks for, where each one comes from in this repo, and what (if any)
-manual capture is still needed. Items marked **manual** are screenshots/exports you produce
-while demonstrating the running system.
+All 12 items (a–l) and where each artifact now lives in the repo.
 
-| # | Deliverable | Source / how to produce |
-|---|-------------|-------------------------|
-| a | The JSP file used | `index.jsp` (repo root) — attach it. |
-| b | Screenshot of GitHub with the app in it | **manual** — screenshot the repo file list showing `index.jsp` at https://github.com/moshetal/DevOpsCourseFinalProject |
-| c | Screenshot of the app in Tomcat (show the URL) | **manual** — browser at `http://localhost:8081/compliment-tal-fellner-reich-kadmon-kokotek/` with the address bar visible |
-| d | Link to the public GitHub repo | https://github.com/moshetal/DevOpsCourseFinalProject |
-| e | Monitor tool name + what was monitored + "passed" screenshot | **UptimeRobot**, HTTP(s) monitor at 5-min interval on the app URL. **manual** — screenshot the green "Up" status. (Setup in `docs/README.md` §6.) |
-| f | Selenium IDE `.side` file | Replaced by **Playwright**: attach `tests/e2e/compliment-roast.spec.ts` (the spec is the equivalent test artifact). |
-| g | Test pass screenshot + validation explanation (positive/negative, verify/assert) | **manual** — screenshot the `npx playwright test` "5 passed" output and/or the HTML report. Validation rationale is in `docs/README.md` §2. |
-| h | HAR scenario described in words | load page → type a name → click *Compliment* → type a name → click *Roast*. (Full text in `docs/README.md` §7.) |
-| i | The HAR file | **manual** — record in Chrome DevTools → Network → "Save all as HAR with content". |
-| j | App max limit + why + how found | Run the Gatling **MaxLimit** simulation; read the arrival rate where p95/p99 latency spikes / errors start. Explanation in `docs/README.md` §3. Write the number + reasoning in the email. |
-| k | 3 screenshots of the Gatling CMD run summaries (max, load, stress) | **manual** — screenshot the terminal summary after each `mvnw gatling:test` run. |
-| l | 3 PDFs (max, load, stress) of the Gatling result graphs | **manual** — open each `gatling/target/gatling/<run>/index.html` → Print → Save as PDF. Explain in the email why the graphs look the way they do (e.g. latency climbs as arrival rate exceeds capacity; errors appear once threads saturate). |
+| # | Deliverable | Artifact |
+|---|-------------|----------|
+| a | The JSP file | `index.jsp` |
+| b | GitHub screenshot | `docs/screenshots/github-repo.png` |
+| c | App in Tomcat (show URL) | `docs/screenshots/app-tomcat-8081.png` — URL `http://localhost:8081/compliment-tal-fellner-reich-kadmon-kokotek/` (for the email, you may want a shot that also shows the browser address bar) |
+| d | Public repo link | https://github.com/dorkokotek651/DevOpsCourseFinalProject |
+| e | Monitor + "Up" screenshot | **UptimeRobot**, HTTP monitor on the Render URL, 5-min interval, status "Up". Screenshot is in the chat (login-gated, so not regenerable to a file here) — save it from there |
+| f | Test file (replaces .side) | `tests/e2e/compliment-roast.spec.ts` (Playwright) |
+| g | Test pass + validation explanation | `docs/screenshots/playwright-report.png` (5 passed). Validation rationale: see README §2 — positive (1–3) prove compliment/roast work; negative (4) asserts the "Please enter a name first." error; hard `assert` for must-pass behavior, soft `verify` for the link/badge |
+| h | HAR scenario in words | load page → type name → Compliment → type name → Roast (README §7) |
+| i | The HAR file | `docs/compliment-roast.har` |
+| j | Max limit + why | `docs/gatling-cmd-summaries.txt` (bottom). Ramped to 200 req/s, 36,180 requests, 0 errors, p99 = 3 ms → limit is above 200 req/s on this hardware (pure-CPU JSP, no DB/IO) |
+| k | 3 Gatling CMD summaries | `docs/gatling-cmd-summaries.txt` (exact console output) + `docs/screenshots/gatling-{max-limit,load,stress}.png` |
+| l | 3 Gatling PDFs (graphs) | `docs/gatling-reports/gatling-{max-limit,load,stress}.pdf` |
 
-## Quick command reference
+## Bonus #5 (+10) — done
+Live public app on Render: https://devopscoursefinalproject.onrender.com/ , monitored by UptimeRobot.
+The 5 Playwright tests also pass against this live URL.
 
-```powershell
-# Deploy locally
-Copy-Item -Force index.jsp "C:\apache-tomcat-10.1.34\webapps\compliment-tal-fellner-reich-kadmon-kokotek\index.jsp"
+## Why the Gatling graphs look flat (for the email)
+Arrival rates stayed within the app's capacity, so latency stays ~1 ms and error rate is 0% for the
+whole run — a healthy, unsaturated system. The max-limit ramp confirms the ceiling is higher than the
+200 req/s tested.
 
-# Playwright (item f, g)
-cd tests; $env:BASE_URL="http://localhost:8081/compliment-tal-fellner-reich-kadmon-kokotek/"; npx playwright test
-
-# Gatling (items j, k, l)
-cd gatling
-.\mvnw.cmd gatling:test -Dgatling.simulationClass=simulations.MaxLimitSimulation
-.\mvnw.cmd gatling:test -Dgatling.simulationClass=simulations.LoadSimulation
-.\mvnw.cmd gatling:test -Dgatling.simulationClass=simulations.StressSimulation
-```
-
-## Status summary
-
-- **Built in this repo:** a (jsp), d (repo link), f (Playwright spec), h (HAR scenario text),
-  plus the runbook/automation for b, c, e, g, i, j, k, l.
-- **Still requires manual capture during the demo:** b, c, e, g, i, k, l screenshots/exports,
-  and writing the item-j max-limit number into the email after running the MaxLimit simulation.
-- **Bonus #5 (public IP):** deploy to Render per `docs/README.md` §5, then point items c/e/j at
-  the public URL for the +10 bonus.
+## Jenkins (CI/CD, assignment #4/#6/#7/#8–10)
+4 Pipeline jobs at http://localhost:8080 — Deploy, Playwright-Tests, Monitor (5-min cron), Gatling
+(MAX/LOAD/STRESS) — all verified green. Pipelines-as-code in `jenkins/Jenkinsfile.*`.
