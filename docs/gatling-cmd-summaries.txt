@@ -1,0 +1,69 @@
+Gatling CMD run summaries — MTA DevOps Final Project
+Target: http://localhost:8081/compliment-tal-fellner-reich-kadmon-kokotek  (local Tomcat)
+Date: 2026-06-15
+(These are the console summaries Gatling prints at the end of each run — deliverable k.)
+
+==================================================================================
+#8  MAX LIMIT  (simulations.MaxLimitSimulation)  — ramp 1 -> 200 req/s over 2 min
+==================================================================================
+---- Global Information --------------------------------------------------------
+> request count                          36180 (OK=36180  KO=0)
+> min response time (ms)                     0
+> max response time (ms)                    19
+> mean response time (ms)                    1
+> response time 95th percentile (ms)         3
+> response time 99th percentile (ms)         3
+> mean throughput (rps)                 294.15
+---- Response Time Distribution ------------------------------------------------
+> t < 800 ms                            36180 (100%)
+> 800 ms <= t < 1200 ms                     0   (0%)
+> t >= 1200 ms                              0   (0%)
+> KO                                        0   (0%)
+Assertion: 95th percentile of response time < 2000 ms  ->  true (actual: 3 ms)
+
+==================================================================================
+#9  LOAD  (simulations.LoadSimulation)  — constant 20 req/s for 5 min
+==================================================================================
+---- Global Information --------------------------------------------------------
+> request count                          18000 (OK=18000  KO=0)
+> min response time (ms)                     0
+> max response time (ms)                    20
+> mean response time (ms)                    1
+> response time 95th percentile (ms)         2
+> response time 99th percentile (ms)         3
+> mean throughput (rps)                  59.60
+---- Response Time Distribution ------------------------------------------------
+> t < 800 ms                            18000 (100%)
+> KO                                        0   (0%)
+
+==================================================================================
+#10 STRESS  (simulations.StressSimulation)  — ramp 10 -> 150 req/s over 5 min
+==================================================================================
+---- Global Information --------------------------------------------------------
+> request count                          72000 (OK=72000  KO=0)
+> min response time (ms)                     0
+> max response time (ms)                    34
+> mean response time (ms)                    1
+> response time 95th percentile (ms)         3
+> response time 99th percentile (ms)         4
+> mean throughput (rps)                 237.62
+---- Response Time Distribution ------------------------------------------------
+> t < 800 ms                            72000 (100%)
+> KO                                        0   (0%)
+
+==================================================================================
+MAX LIMIT — answer for email item (j)
+==================================================================================
+We ramped open arrivals from 1 to 200 requests/second. The app served all 36,180
+requests with ZERO failures and a 99th-percentile response time of just 3 ms
+(max 19 ms). Throughput tracked the injected rate up to ~294 req/s with no
+degradation, so the application's max limit is ABOVE 200 req/s on this hardware.
+
+Why: "Compliment-o-Roast" is a pure-CPU JSP — it only picks a random string and
+renders HTML, with no database or I/O. So a single Tomcat instance absorbs this
+rate easily; the true ceiling would be reached only at much higher arrival rates
+(bounded by Tomcat worker threads / CPU), beyond what was needed to demonstrate.
+
+Why the load/stress graphs look flat: arrival rates (20 and 10->150 req/s) stayed
+well within capacity, so latency stays near 1 ms and the error rate stays 0% for
+the whole run — a healthy system that is not saturated.
